@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSelectionStore } from '../../store/selectionStore';
 
-/** Brief radial flash whenever the scale level changes, selling scroll-driven transitions as a "dive" rather than a hard cut. */
+/** Brief radial flash whenever the scale level or Earth-surface view changes, selling zoom transitions as a "dive" rather than a hard cut. */
 export function ZoomTransitionOverlay() {
   const scaleLevel = useSelectionStore((s) => s.scaleLevel);
+  const earthSurfaceOpen = useSelectionStore((s) => s.earthSurfaceOpen);
   const [opacity, setOpacity] = useState(0);
   const [instant, setInstant] = useState(false);
   const prevLevelRef = useRef(scaleLevel);
+  const prevSurfaceRef = useRef(earthSurfaceOpen);
 
   useEffect(() => {
-    if (prevLevelRef.current === scaleLevel) return;
+    const changed = prevLevelRef.current !== scaleLevel || prevSurfaceRef.current !== earthSurfaceOpen;
     prevLevelRef.current = scaleLevel;
+    prevSurfaceRef.current = earthSurfaceOpen;
+    if (!changed) return;
     setInstant(true);
     setOpacity(1);
     const raf = requestAnimationFrame(() => {
@@ -18,7 +22,7 @@ export function ZoomTransitionOverlay() {
       setOpacity(0);
     });
     return () => cancelAnimationFrame(raf);
-  }, [scaleLevel]);
+  }, [scaleLevel, earthSurfaceOpen]);
 
   return (
     <div

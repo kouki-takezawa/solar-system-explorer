@@ -13,7 +13,7 @@ export function ScaleNavigator() {
   const setScaleLevel = useSelectionStore((s) => s.setScaleLevel);
 
   return (
-    <div className="pointer-events-auto absolute left-1/2 top-[52px] z-20 flex -translate-x-1/2 gap-0.5 overflow-x-auto rounded-full border border-offwhite/10 bg-space-raised/80 p-1 backdrop-blur-md md:top-[60px] md:gap-1">
+    <div className="pointer-events-auto absolute left-1/2 top-[52px] z-20 flex w-max max-w-[calc(100vw-24px)] -translate-x-1/2 gap-0.5 overflow-x-auto rounded-full border border-offwhite/10 bg-space-raised/80 p-1 backdrop-blur-md md:top-[60px] md:max-w-[calc(100vw-40px)] md:gap-1">
       {LEVELS.map((level) => {
         const active = scaleLevel === level.key;
         return (

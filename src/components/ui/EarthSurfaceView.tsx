@@ -6,20 +6,22 @@ import { useSelectionStore } from '../../store/selectionStore';
 const ESRI_IMAGERY_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const ESRI_LABELS_URL =
   'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}';
+const DEFAULT_CENTER: [number, number] = [35.681, 139.767];
 
+/** The 2D satellite map layer -- App.tsx mounts this behind the persistent UI chrome (Sidebar, TopBar, etc). */
 export function EarthSurfaceView() {
-  const setEarthSurfaceOpen = useSelectionStore((s) => s.setEarthSurfaceOpen);
+  const latLng = useSelectionStore((s) => s.earthSurfaceLatLng);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const [locating, setLocating] = useState(false);
-  const [locateError, setLocateError] = useState<string | null>(null);
+  const isFirstLatLngRef = useRef(true);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, {
-      center: [35.681, 139.767],
-      zoom: 4,
+      center: latLng ?? DEFAULT_CENTER,
+      zoom: latLng ? 12 : 4,
       minZoom: 2,
       maxZoom: 19,
       zoomControl: false,
@@ -33,60 +35,37 @@ export function EarthSurfaceView() {
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     mapRef.current = map;
 
+    // Fade in rather than popping straight to a flat map -- the globe->map
+    // cut itself is unavoidable (2D tiles), but a quick materialize reads as
+    // a continuation of the dive instead of a hard scene change.
+    const raf = requestAnimationFrame(() => setVisible(true));
+
     return () => {
+      cancelAnimationFrame(raf);
       map.remove();
       mapRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLocate = () => {
-    if (!mapRef.current || !navigator.geolocation) {
-      setLocateError('この端末では現在地を取得できません');
+  useEffect(() => {
+    // Skip the initial mount (already the map's construction center) --
+    // this effect handles *later* moves, e.g. the "go to my location" button.
+    if (isFirstLatLngRef.current) {
+      isFirstLatLngRef.current = false;
       return;
     }
-    setLocateError(null);
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        mapRef.current?.flyTo([pos.coords.latitude, pos.coords.longitude], 18, { duration: 2 });
-        setLocating(false);
-      },
-      () => {
-        setLocateError('現在地を取得できませんでした（位置情報の許可を確認してください）');
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  };
+    if (mapRef.current && latLng) {
+      mapRef.current.flyTo(latLng, 18, { duration: 2 });
+    }
+  }, [latLng]);
 
   return (
-    <div className="absolute inset-0 z-40 bg-space">
+    <div
+      className="absolute inset-0 bg-space"
+      style={{ opacity: visible ? 1 : 0, transition: 'opacity 550ms ease-out' }}
+    >
       <div ref={containerRef} className="absolute inset-0" />
-
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-2 p-3 md:p-5">
-        <button
-          onClick={() => setEarthSurfaceOpen(false)}
-          className="pointer-events-auto flex items-center gap-2 rounded-full border border-offwhite/15 bg-space-raised/90 px-4 py-2 font-mono text-xs text-offwhite/85 backdrop-blur-md transition-colors hover:border-cyan/50 hover:text-cyan"
-        >
-          ← 宇宙へ戻る
-        </button>
-
-        <div className="pointer-events-auto flex flex-col items-end gap-1.5">
-          <button
-            onClick={handleLocate}
-            disabled={locating}
-            className="flex items-center gap-2 rounded-full border border-cyan/40 bg-space-raised/90 px-4 py-2 font-mono text-xs text-cyan backdrop-blur-md transition-colors hover:bg-cyan/10 disabled:opacity-50"
-          >
-            {locating ? '取得中...' : '📍 現在地へ'}
-          </button>
-          {locateError && (
-            <span className="max-w-[220px] rounded-md bg-space-raised/95 px-2.5 py-1.5 text-right font-mono text-[10px] leading-relaxed text-alert">
-              {locateError}
-            </span>
-          )}
-        </div>
-      </div>
-
       <div className="pointer-events-none absolute bottom-3 left-3 z-10 max-w-xs rounded-lg border border-offwhite/10 bg-space-raised/85 px-3 py-2 font-mono text-[10px] leading-relaxed text-offwhite/45 backdrop-blur-md">
         衛星画像: Esri World Imagery（無料タイル）。地域により解像度が異なります。
       </div>

@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html, Billboard } from '@react-three/drei';
-import { DoubleSide, Group, Mesh, Vector3 } from 'three';
+import { Group, Mesh, Vector3 } from 'three';
 import type { PlanetData } from '../../data/planets';
 import { heliocentricPosition } from '../../lib/orbitalMechanics';
 import { daysSinceJ2000 } from '../../lib/julianDate';
@@ -11,6 +11,8 @@ import { setBodyRadius } from '../../lib/radiusRegistry';
 import { useSelectionStore } from '../../store/selectionStore';
 import { useTimeStore } from '../../store/timeStore';
 import { EarthGlobe } from './EarthGlobe';
+import { PlanetSurface } from './PlanetSurface';
+import { SaturnRing } from './SaturnRing';
 
 export function PlanetMesh({ planet }: { planet: PlanetData }) {
   const groupRef = useRef<Group>(null);
@@ -60,35 +62,50 @@ export function PlanetMesh({ planet }: { planet: PlanetData }) {
         document.body.style.cursor = 'auto';
       }}
     >
-      {planet.id === 'earth' ? (
-        <Suspense
-          fallback={
-            <mesh ref={meshRef}>
-              <sphereGeometry args={[planet.sceneRadius, 40, 40]} />
-              <meshStandardMaterial color={planet.color} roughness={0.85} metalness={0.05} />
-            </mesh>
-          }
-        >
-          <EarthGlobe ref={meshRef} radius={planet.sceneRadius} isSelected={isSelected} isHovered={isHovered} />
-        </Suspense>
-      ) : (
-        <mesh ref={meshRef}>
-          <sphereGeometry args={[planet.sceneRadius, 40, 40]} />
-          <meshStandardMaterial
-            color={planet.color}
-            roughness={0.85}
-            metalness={0.05}
-            emissive={isSelected || isHovered ? '#00f0ff' : '#000000'}
-            emissiveIntensity={isSelected ? 0.25 : isHovered ? 0.12 : 0}
-          />
-        </mesh>
-      )}
+      {(() => {
+        const fallback = (
+          <mesh ref={meshRef}>
+            <sphereGeometry args={[planet.sceneRadius, 40, 40]} />
+            <meshStandardMaterial
+              color={planet.color}
+              roughness={0.85}
+              metalness={0.05}
+              emissive={isSelected || isHovered ? '#00f0ff' : '#000000'}
+              emissiveIntensity={isSelected ? 0.25 : isHovered ? 0.12 : 0}
+            />
+          </mesh>
+        );
+        if (planet.id === 'earth') {
+          return (
+            <Suspense fallback={fallback}>
+              <EarthGlobe ref={meshRef} radius={planet.sceneRadius} isSelected={isSelected} isHovered={isHovered} />
+            </Suspense>
+          );
+        }
+        if (planet.textureUrl) {
+          return (
+            <Suspense fallback={fallback}>
+              <PlanetSurface
+                ref={meshRef}
+                radius={planet.sceneRadius}
+                textureUrl={planet.textureUrl}
+                isSelected={isSelected}
+                isHovered={isHovered}
+              />
+            </Suspense>
+          );
+        }
+        return fallback;
+      })()}
 
-      {planet.hasRings && (
-        <mesh rotation={[Math.PI / 2 - 0.2, 0, 0]}>
-          <ringGeometry args={[planet.sceneRadius * 1.4, planet.sceneRadius * 2.3, 64]} />
-          <meshBasicMaterial color="#d9c9a3" transparent opacity={0.5} side={DoubleSide} toneMapped={false} />
-        </mesh>
+      {planet.hasRings && planet.ringTextureUrl && (
+        <Suspense fallback={null}>
+          <SaturnRing
+            innerRadius={planet.sceneRadius * 1.4}
+            outerRadius={planet.sceneRadius * 2.3}
+            textureUrl={planet.ringTextureUrl}
+          />
+        </Suspense>
       )}
 
       {isSelected && (

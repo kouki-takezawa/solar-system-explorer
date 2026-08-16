@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSelectionStore, type SidebarTab } from '../../store/selectionStore';
 import { useTimeStore } from '../../store/timeStore';
 import { ALL_BODIES, PLANETS, type PlanetData } from '../../data/planets';
+import { MOON_ENTITY } from '../../data/moon';
 import { NEARBY_STARS, SUN_AS_STAR } from '../../data/stars';
 import { GALAXY_LANDMARKS } from '../../lib/galaxy';
 import { UNIVERSE_SHELLS } from '../../lib/universe';
@@ -13,17 +14,20 @@ const AU_KM = 1.495978707e8;
 const LIGHT_SPEED_KM_S = 299792.458;
 const EARTH = PLANETS.find((p) => p.id === 'earth')!;
 const STELLAR_ENTITIES: Entity[] = [SUN_AS_STAR, ...NEARBY_STARS];
+const EARTH_INDEX = ALL_BODIES.findIndex((b) => b.id === 'earth');
+const SOLAR_CHIPS = [...ALL_BODIES.slice(0, EARTH_INDEX + 1), MOON_ENTITY, ...ALL_BODIES.slice(EARTH_INDEX + 1)];
 
 type ChipItem = { id: string; nameJa: string; nameEn: string; color: string };
 
 function getChipList(scaleLevel: ScaleLevel): ChipItem[] {
-  if (scaleLevel === 'solar') return ALL_BODIES;
+  if (scaleLevel === 'solar') return SOLAR_CHIPS;
   if (scaleLevel === 'stellar') return STELLAR_ENTITIES;
   if (scaleLevel === 'galaxy') return GALAXY_LANDMARKS;
   return UNIVERSE_SHELLS;
 }
 
 function getEntityDetail(scaleLevel: ScaleLevel, id: string): Entity | null {
+  if (scaleLevel === 'solar') return id === 'moon' ? MOON_ENTITY : null;
   if (scaleLevel === 'stellar') return STELLAR_ENTITIES.find((e) => e.id === id) ?? null;
   if (scaleLevel === 'galaxy') return GALAXY_LANDMARKS.find((e) => e.id === id) ?? null;
   if (scaleLevel === 'universe') return UNIVERSE_SHELLS.find((e) => e.id === id) ?? null;
@@ -234,7 +238,8 @@ export function Sidebar() {
   const selectedPlanet =
     scaleLevel === 'solar' && selectedId && selectedId !== 'sun' ? PLANETS.find((p) => p.id === selectedId) ?? null : null;
   const isSun = scaleLevel === 'solar' && selectedId === 'sun';
-  const selectedEntity = scaleLevel !== 'solar' && selectedId ? getEntityDetail(scaleLevel, selectedId) : null;
+  const isMoon = scaleLevel === 'solar' && selectedId === 'moon';
+  const selectedEntity = selectedId ? getEntityDetail(scaleLevel, selectedId) : null;
 
   return (
     <>
@@ -293,10 +298,12 @@ export function Sidebar() {
               </p>
             </div>
           )}
-          {selectedId && scaleLevel === 'solar' && (
+          {selectedId && scaleLevel === 'solar' && !isMoon && (
             <SelectedPanel isSun={isSun} planet={selectedPlanet} tab={sidebarTab} setTab={setSidebarTab} />
           )}
-          {selectedId && scaleLevel !== 'solar' && selectedEntity && <GenericSelectedPanel entity={selectedEntity} />}
+          {selectedId && (scaleLevel !== 'solar' || isMoon) && selectedEntity && (
+            <GenericSelectedPanel entity={selectedEntity} />
+          )}
         </div>
       </div>
     </>
