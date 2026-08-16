@@ -129,6 +129,11 @@ function SelectedPanel({
           <Row label="衛星数" value={`${planet.moons}`} />
           <Row label="発見" value={planet.discovered} />
           <p className="pt-2 text-[11px] leading-relaxed text-offwhite/60">{planet.description}</p>
+          {planet.id === 'earth' && (
+            <p className="rounded-md border border-cyan/30 bg-cyan/10 px-3 py-2 text-[11px] leading-relaxed text-cyan">
+              💡 このままズームインし続けると、衛星写真で地表まで降りられます。
+            </p>
+          )}
         </div>
       )}
 
