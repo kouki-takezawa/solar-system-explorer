@@ -19,7 +19,6 @@ export interface PlanetData {
   nameJa: string;
   nameEn: string;
   color: string;
-  emissive?: string;
   sceneRadius: number; // visual radius, scene units (exaggerated for legibility)
   realRadiusKm: number;
   rotationPeriodHours: number;

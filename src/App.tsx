@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { SceneCanvas } from './components/scene/SceneCanvas';
 import { TopBar } from './components/ui/TopBar';
 import { Sidebar } from './components/ui/Sidebar';
@@ -5,10 +6,16 @@ import { CameraModeSwitch } from './components/ui/CameraModeSwitch';
 import { TimeController } from './components/ui/TimeController';
 import { ScaleNavigator } from './components/ui/ScaleNavigator';
 import { LevelCaption } from './components/ui/LevelCaption';
-import { EarthSurfaceView } from './components/ui/EarthSurfaceView';
 import { EarthSurfaceControls } from './components/ui/EarthSurfaceControls';
 import { ZoomTransitionOverlay } from './components/ui/ZoomTransitionOverlay';
 import { useSelectionStore } from './store/selectionStore';
+
+// Leaflet (the map library) is a meaningful chunk of bundle weight that most
+// sessions never need -- split it out so it only downloads once someone
+// actually dives into Earth.
+const EarthSurfaceView = lazy(() =>
+  import('./components/ui/EarthSurfaceView').then((m) => ({ default: m.EarthSurfaceView })),
+);
 
 function App() {
   const scaleLevel = useSelectionStore((s) => s.scaleLevel);
@@ -21,7 +28,9 @@ function App() {
       </div>
       {earthSurfaceOpen && (
         <div className="absolute inset-0 z-[5]">
-          <EarthSurfaceView />
+          <Suspense fallback={null}>
+            <EarthSurfaceView />
+          </Suspense>
         </div>
       )}
       <ZoomTransitionOverlay />

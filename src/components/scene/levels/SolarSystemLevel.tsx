@@ -1,7 +1,9 @@
 import { PLANETS } from '../../../data/planets';
+import { PROBES } from '../../../data/probes';
 import { SunMesh } from '../SunMesh';
 import { PlanetMesh } from '../PlanetMesh';
 import { MoonMesh } from '../MoonMesh';
+import { ProbeMesh } from '../ProbeMesh';
 import { OrbitPath } from '../OrbitPath';
 import { TimeDriver } from '../TimeDriver';
 import { EarthDiveWatcher } from '../EarthDiveWatcher';
@@ -19,6 +21,9 @@ export function SolarSystemLevel() {
         <PlanetMesh key={planet.id} planet={planet} />
       ))}
       <MoonMesh />
+      {PROBES.map((probe) => (
+        <ProbeMesh key={probe.id} probe={probe} />
+      ))}
     </group>
   );
 }

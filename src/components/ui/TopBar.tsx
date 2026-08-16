@@ -30,7 +30,7 @@ export function TopBar() {
           </p>
         </div>
         <span className="ml-2 hidden rounded-full border border-violet/50 bg-violet/10 px-2.5 py-0.5 font-mono text-[10px] tracking-wider text-violet md:inline-block">
-          PHASE 1-2 DEMO
+          PHASE 1-3 DEMO
         </span>
       </div>
 

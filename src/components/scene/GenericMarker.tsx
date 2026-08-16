@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Billboard, Html } from '@react-three/drei';
 import { AdditiveBlending, Group, Sprite, SpriteMaterial, Vector3 } from 'three';
-import { setBodyRadius } from '../../lib/radiusRegistry';
 import { getBodyPosition } from '../../lib/positionsRegistry';
 import { getStarGlowTexture } from '../../lib/starTexture';
-import { useSelectionStore } from '../../store/selectionStore';
+import { useSelectableBody } from '../../hooks/useSelectableBody';
+import { SelectionRing } from './SelectionRing';
+import { BodyLabel } from './BodyLabel';
 
 interface GenericMarkerProps {
   id: string;
@@ -24,17 +24,10 @@ export function GenericMarker({ id, position, color, label, radius = 0.6, glow =
   const twinklePhase = useMemo(() => Math.random() * Math.PI * 2, []);
   const glowTexture = useMemo(() => getStarGlowTexture(), []);
 
-  const select = useSelectionStore((s) => s.select);
-  const setHovered = useSelectionStore((s) => s.setHovered);
-  const isSelected = useSelectionStore((s) => s.selectedId === id);
-  const isHovered = useSelectionStore((s) => s.hoveredId === id);
-
-  useEffect(() => {
-    // Markers represent point-like or vastly-larger-than-rendered objects
-    // (stars, galaxies, superclusters) -- frame the camera well back from the
-    // tiny visual sprite so a click doesn't just fill the screen with it.
-    setBodyRadius(id, radius * 5);
-  }, [id, radius]);
+  // Markers represent point-like or vastly-larger-than-rendered objects
+  // (stars, galaxies, superclusters) -- frame the camera well back from the
+  // tiny visual sprite so a click doesn't just fill the screen with it.
+  const { isSelected, isHovered, handlers } = useSelectableBody(id, radius * 5);
 
   useFrame(({ clock }) => {
     // Track world position every frame (not just on mount) so clicks/camera
@@ -53,23 +46,7 @@ export function GenericMarker({ id, position, color, label, radius = 0.6, glow =
   });
 
   return (
-    <group
-      ref={groupRef}
-      position={position}
-      onClick={(e) => {
-        e.stopPropagation();
-        select(id);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(id);
-        document.body.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        setHovered(null);
-        document.body.style.cursor = 'auto';
-      }}
-    >
+    <group ref={groupRef} position={position} {...handlers}>
       {/* bright white-hot core -- real stars read as near-white at their center regardless of tint */}
       <sprite scale={[radius * 1.3, radius * 1.3, 1]}>
         <spriteMaterial
@@ -95,40 +72,8 @@ export function GenericMarker({ id, position, color, label, radius = 0.6, glow =
           />
         </sprite>
       )}
-      {isSelected && (
-        <Billboard>
-          <mesh>
-            <ringGeometry args={[radius * 2.4, radius * 2.6, 40]} />
-            <meshBasicMaterial color="#00f0ff" transparent opacity={0.85} toneMapped={false} />
-          </mesh>
-        </Billboard>
-      )}
-      <Html position={[0, radius * 2 + 0.4, 0]} center style={{ pointerEvents: 'none' }} occlude={false} zIndexRange={[10, 0]}>
-        <div
-          className="font-mono"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 11,
-            whiteSpace: 'nowrap',
-            color: isSelected || isHovered ? '#00f0ff' : 'rgba(240,244,248,0.6)',
-            textShadow: isSelected || isHovered ? '0 0 8px rgba(0,240,255,0.8)' : 'none',
-            letterSpacing: 0.4,
-          }}
-        >
-          <span
-            style={{
-              width: 5,
-              height: 5,
-              borderRadius: '50%',
-              background: 'currentColor',
-              boxShadow: '0 0 6px currentColor',
-            }}
-          />
-          {label}
-        </div>
-      </Html>
+      {isSelected && <SelectionRing innerRadius={radius * 2.4} outerRadius={radius * 2.6} />}
+      <BodyLabel name={label} yOffset={radius * 2 + 0.4} active={isSelected || isHovered} />
     </group>
   );
 }

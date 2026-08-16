@@ -47,7 +47,8 @@ export function CameraRig({ overviewDistance, zoomInMin, zoomOutMax, onBoundary 
 
     let camDistance: number;
     if (selectedId) {
-      camDistance = Math.max(getBodyRadius(selectedId) * 7, overviewDistance * 0.02);
+      const framingMultiplier = cameraMode === 'jump' ? 3 : 7;
+      camDistance = Math.max(getBodyRadius(selectedId) * framingMultiplier, overviewDistance * 0.02);
     } else if (entry === 'near') {
       camDistance = zoomInMin * 1.4;
     } else if (entry === 'far') {
@@ -141,7 +142,7 @@ export function CameraRig({ overviewDistance, zoomInMin, zoomOutMax, onBoundary 
     const controls = controlsRef.current;
     if (!controls || isAnimatingRef.current) return;
 
-    if (cameraMode === 'follow' && selectedId) {
+    if ((cameraMode === 'follow' || cameraMode === 'jump') && selectedId) {
       const live = getBodyPosition(selectedId);
       const delta = live.clone().sub(followBaseRef.current);
       if (delta.lengthSq() > 0) {

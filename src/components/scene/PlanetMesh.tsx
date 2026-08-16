@@ -1,32 +1,26 @@
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html, Billboard } from '@react-three/drei';
 import { Group, Mesh, Vector3 } from 'three';
 import type { PlanetData } from '../../data/planets';
 import { heliocentricPosition } from '../../lib/orbitalMechanics';
 import { daysSinceJ2000 } from '../../lib/julianDate';
 import { auToScene } from '../../lib/scale';
 import { getBodyPosition } from '../../lib/positionsRegistry';
-import { setBodyRadius } from '../../lib/radiusRegistry';
 import { useSelectionStore } from '../../store/selectionStore';
 import { useTimeStore } from '../../store/timeStore';
+import { useSelectableBody } from '../../hooks/useSelectableBody';
 import { EarthGlobe } from './EarthGlobe';
 import { PlanetSurface } from './PlanetSurface';
 import { SaturnRing } from './SaturnRing';
+import { SelectionRing } from './SelectionRing';
+import { BodyLabel } from './BodyLabel';
 
 export function PlanetMesh({ planet }: { planet: PlanetData }) {
   const groupRef = useRef<Group>(null);
   const meshRef = useRef<Mesh>(null);
   const scratch = useRef(new Vector3());
 
-  useEffect(() => {
-    setBodyRadius(planet.id, planet.sceneRadius);
-  }, [planet.id, planet.sceneRadius]);
-
-  const select = useSelectionStore((s) => s.select);
-  const setHovered = useSelectionStore((s) => s.setHovered);
-  const isSelected = useSelectionStore((s) => s.selectedId === planet.id);
-  const isHovered = useSelectionStore((s) => s.hoveredId === planet.id);
+  const { isSelected, isHovered, handlers } = useSelectableBody(planet.id, planet.sceneRadius);
 
   useFrame(() => {
     const { currentTimeMs } = useTimeStore.getState();
@@ -46,22 +40,7 @@ export function PlanetMesh({ planet }: { planet: PlanetData }) {
   });
 
   return (
-    <group
-      ref={groupRef}
-      onClick={(e) => {
-        e.stopPropagation();
-        select(planet.id);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setHovered(planet.id);
-        document.body.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        setHovered(null);
-        document.body.style.cursor = 'auto';
-      }}
-    >
+    <group ref={groupRef} {...handlers}>
       {(() => {
         const fallback = (
           <mesh ref={meshRef}>
@@ -109,45 +88,15 @@ export function PlanetMesh({ planet }: { planet: PlanetData }) {
       )}
 
       {isSelected && (
-        <Billboard>
-          <mesh>
-            <ringGeometry args={[planet.sceneRadius * 1.7, planet.sceneRadius * 1.82, 48]} />
-            <meshBasicMaterial color="#00f0ff" transparent opacity={0.85} toneMapped={false} />
-          </mesh>
-          <mesh rotation={[0, 0, Math.PI / 4]}>
-            <ringGeometry args={[planet.sceneRadius * 2.1, planet.sceneRadius * 2.14, 4, 1]} />
-            <meshBasicMaterial color="#00f0ff" transparent opacity={0.6} toneMapped={false} />
-          </mesh>
-        </Billboard>
+        <SelectionRing
+          innerRadius={planet.sceneRadius * 1.7}
+          outerRadius={planet.sceneRadius * 1.82}
+          segments={48}
+          diamond={{ innerRadius: planet.sceneRadius * 2.1, outerRadius: planet.sceneRadius * 2.14 }}
+        />
       )}
 
-      <Html position={[0, planet.sceneRadius + 0.55, 0]} center style={{ pointerEvents: 'none' }} occlude={false} zIndexRange={[10, 0]}>
-        <div
-          className="font-mono"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 11,
-            whiteSpace: 'nowrap',
-            color: isSelected || isHovered ? '#00f0ff' : 'rgba(240,244,248,0.55)',
-            textShadow: isSelected || isHovered ? '0 0 8px rgba(0,240,255,0.8)' : 'none',
-            transition: 'color 0.2s',
-            letterSpacing: 0.4,
-          }}
-        >
-          <span
-            style={{
-              width: 5,
-              height: 5,
-              borderRadius: '50%',
-              background: 'currentColor',
-              boxShadow: '0 0 6px currentColor',
-            }}
-          />
-          {planet.nameJa}
-        </div>
-      </Html>
+      <BodyLabel name={planet.nameJa} yOffset={planet.sceneRadius + 0.55} active={isSelected || isHovered} />
     </group>
   );
 }
