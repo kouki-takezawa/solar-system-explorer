@@ -103,7 +103,7 @@ export function GenericMarker({ id, position, color, label, radius = 0.6, glow =
           </mesh>
         </Billboard>
       )}
-      <Html position={[0, radius * 2 + 0.4, 0]} center style={{ pointerEvents: 'none' }} occlude={false}>
+      <Html position={[0, radius * 2 + 0.4, 0]} center style={{ pointerEvents: 'none' }} occlude={false} zIndexRange={[10, 0]}>
         <div
           className="font-mono"
           style={{

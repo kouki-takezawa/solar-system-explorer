@@ -20,7 +20,11 @@ interface SelectionState {
   sidebarOpen: boolean;
   /** True when the Earth dive-in (2D satellite map) overlay is showing. */
   earthSurfaceOpen: boolean;
+  /** Where the map opens: wherever the camera was actually looking on the globe when the dive triggered. */
+  earthSurfaceLatLng: [number, number] | null;
+  openEarthSurface: (latLng: [number, number]) => void;
   setEarthSurfaceOpen: (open: boolean) => void;
+  setEarthSurfaceLatLng: (latLng: [number, number]) => void;
   /**
    * Switches scale level -- from a tab click, a drill-down button, or a
    * scroll-zoom crossing a boundary. The camera always arrives via a short
@@ -49,7 +53,10 @@ export const useSelectionStore = create<SelectionState>((set, get) => ({
   distanceScale: 'log',
   sidebarOpen: false,
   earthSurfaceOpen: false,
+  earthSurfaceLatLng: null,
+  openEarthSurface: (latLng) => set({ earthSurfaceOpen: true, earthSurfaceLatLng: latLng }),
   setEarthSurfaceOpen: (open) => set({ earthSurfaceOpen: open }),
+  setEarthSurfaceLatLng: (latLng) => set({ earthSurfaceLatLng: latLng }),
   setScaleLevel: (level) => {
     const currentIdx = LEVEL_ORDER.indexOf(get().scaleLevel);
     const targetIdx = LEVEL_ORDER.indexOf(level);

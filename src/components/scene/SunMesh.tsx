@@ -1,11 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Billboard } from '@react-three/drei';
+import { Billboard, useTexture } from '@react-three/drei';
 import type { Mesh } from 'three';
 import { SUN } from '../../data/planets';
 import { setBodyRadius } from '../../lib/radiusRegistry';
 import { getBodyPosition } from '../../lib/positionsRegistry';
 import { useSelectionStore } from '../../store/selectionStore';
+
+function SunSurface({ meshRef }: { meshRef: React.RefObject<Mesh | null> }) {
+  const map = useTexture(SUN.textureUrl);
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[SUN.sceneRadius, 48, 48]} />
+      <meshBasicMaterial map={map} toneMapped={false} />
+    </mesh>
+  );
+}
 
 export function SunMesh() {
   const meshRef = useRef<Mesh>(null);
@@ -29,10 +39,16 @@ export function SunMesh() {
         select('sun');
       }}
     >
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[SUN.sceneRadius, 48, 48]} />
-        <meshBasicMaterial color={SUN.color} toneMapped={false} />
-      </mesh>
+      <Suspense
+        fallback={
+          <mesh ref={meshRef}>
+            <sphereGeometry args={[SUN.sceneRadius, 48, 48]} />
+            <meshBasicMaterial color={SUN.color} toneMapped={false} />
+          </mesh>
+        }
+      >
+        <SunSurface meshRef={meshRef} />
+      </Suspense>
       {/* soft glow halo */}
       <mesh scale={1.35}>
         <sphereGeometry args={[SUN.sceneRadius, 32, 32]} />
