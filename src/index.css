@@ -9,7 +9,15 @@
   --color-alert: #ff3366;
   --color-offwhite: #f0f4f8;
 
-  --font-mono: 'JetBrains Mono', 'Space Mono', ui-monospace, monospace;
+  /*
+   * Noto Sans JP sits after the Latin monospace fonts so digits/ASCII keep
+   * fixed-width alignment, but any Japanese characters mixed into
+   * font-mono text (planet names, chip labels) fall through to a real
+   * Japanese-glyph font instead of the browser's unpredictable generic
+   * CJK fallback (which can render Han-unified characters with
+   * Simplified-Chinese-style strokes).
+   */
+  --font-mono: 'JetBrains Mono', 'Space Mono', 'Noto Sans JP', ui-monospace, monospace;
   --font-sans: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
 }
 
