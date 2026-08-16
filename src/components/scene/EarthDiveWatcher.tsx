@@ -7,7 +7,7 @@ import { useTimeStore } from '../../store/timeStore';
 import { getBodyPosition } from '../../lib/positionsRegistry';
 import { getBodyRadius } from '../../lib/radiusRegistry';
 import { daysSinceJ2000 } from '../../lib/julianDate';
-import { worldDirectionToLatLng } from '../../lib/earthGeo';
+import { worldDirectionToLatLng } from '../../lib/planetGeo';
 import { PLANETS } from '../../data/planets';
 
 const NORMAL_SELECTION_DISTANCE = 4.3; // matches CameraRig's usual "click a planet" framing for Earth

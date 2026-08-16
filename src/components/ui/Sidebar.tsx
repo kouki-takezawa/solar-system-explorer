@@ -3,6 +3,7 @@ import { useSelectionStore, type SidebarTab } from '../../store/selectionStore';
 import { useTimeStore } from '../../store/timeStore';
 import { ALL_BODIES, PLANETS, type PlanetData } from '../../data/planets';
 import { MOON_ENTITY } from '../../data/moon';
+import { PROBES } from '../../data/probes';
 import { NEARBY_STARS, SUN_AS_STAR } from '../../data/stars';
 import { GALAXY_LANDMARKS } from '../../lib/galaxy';
 import { UNIVERSE_SHELLS } from '../../lib/universe';
@@ -15,7 +16,13 @@ const LIGHT_SPEED_KM_S = 299792.458;
 const EARTH = PLANETS.find((p) => p.id === 'earth')!;
 const STELLAR_ENTITIES: Entity[] = [SUN_AS_STAR, ...NEARBY_STARS];
 const EARTH_INDEX = ALL_BODIES.findIndex((b) => b.id === 'earth');
-const SOLAR_CHIPS = [...ALL_BODIES.slice(0, EARTH_INDEX + 1), MOON_ENTITY, ...ALL_BODIES.slice(EARTH_INDEX + 1)];
+// Bodies that live in the solar-system view but aren't in PLANETS (real
+// heliocentric Kepler elements): the Moon (orbits Earth) and probes (orbit a
+// planet, sit on one, or fly a heliocentric escape trajectory). These render
+// through GenericSelectedPanel like the other scale levels' entities.
+const SOLAR_EXTRA_ENTITIES: Entity[] = [MOON_ENTITY, ...PROBES];
+const SOLAR_EXTRA_BY_ID = new Map(SOLAR_EXTRA_ENTITIES.map((e) => [e.id, e]));
+const SOLAR_CHIPS = [...ALL_BODIES.slice(0, EARTH_INDEX + 1), MOON_ENTITY, ...ALL_BODIES.slice(EARTH_INDEX + 1), ...PROBES];
 
 type ChipItem = { id: string; nameJa: string; nameEn: string; color: string };
 
@@ -27,7 +34,7 @@ function getChipList(scaleLevel: ScaleLevel): ChipItem[] {
 }
 
 function getEntityDetail(scaleLevel: ScaleLevel, id: string): Entity | null {
-  if (scaleLevel === 'solar') return id === 'moon' ? MOON_ENTITY : null;
+  if (scaleLevel === 'solar') return SOLAR_EXTRA_BY_ID.get(id) ?? null;
   if (scaleLevel === 'stellar') return STELLAR_ENTITIES.find((e) => e.id === id) ?? null;
   if (scaleLevel === 'galaxy') return GALAXY_LANDMARKS.find((e) => e.id === id) ?? null;
   if (scaleLevel === 'universe') return UNIVERSE_SHELLS.find((e) => e.id === id) ?? null;
@@ -163,7 +170,7 @@ function SelectedPanel({
             </div>
           ))}
           <p className="pt-2 text-[10px] leading-relaxed text-offwhite/35">
-            ※ 探査機の3Dモデル・軌道表示は Phase 3 で実装予定です。
+            ※ 一部の探査機（ボイジャー、ハッブル、パーサヴィアランス 等）は3Dモデルとして太陽系ビューに登場します。天体検索から探せます。
           </p>
         </div>
       )}
@@ -238,7 +245,7 @@ export function Sidebar() {
   const selectedPlanet =
     scaleLevel === 'solar' && selectedId && selectedId !== 'sun' ? PLANETS.find((p) => p.id === selectedId) ?? null : null;
   const isSun = scaleLevel === 'solar' && selectedId === 'sun';
-  const isMoon = scaleLevel === 'solar' && selectedId === 'moon';
+  const isExtraEntity = scaleLevel === 'solar' && !!selectedId && SOLAR_EXTRA_BY_ID.has(selectedId);
   const selectedEntity = selectedId ? getEntityDetail(scaleLevel, selectedId) : null;
 
   return (
@@ -298,10 +305,10 @@ export function Sidebar() {
               </p>
             </div>
           )}
-          {selectedId && scaleLevel === 'solar' && !isMoon && (
+          {selectedId && scaleLevel === 'solar' && !isExtraEntity && (
             <SelectedPanel isSun={isSun} planet={selectedPlanet} tab={sidebarTab} setTab={setSidebarTab} />
           )}
-          {selectedId && (scaleLevel !== 'solar' || isMoon) && selectedEntity && (
+          {selectedId && (scaleLevel !== 'solar' || isExtraEntity) && selectedEntity && (
             <GenericSelectedPanel entity={selectedEntity} />
           )}
         </div>
