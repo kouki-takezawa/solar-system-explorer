@@ -5,10 +5,12 @@ import { CameraModeSwitch } from './components/ui/CameraModeSwitch';
 import { TimeController } from './components/ui/TimeController';
 import { ScaleNavigator } from './components/ui/ScaleNavigator';
 import { LevelCaption } from './components/ui/LevelCaption';
+import { EarthSurfaceView } from './components/ui/EarthSurfaceView';
 import { useSelectionStore } from './store/selectionStore';
 
 function App() {
   const scaleLevel = useSelectionStore((s) => s.scaleLevel);
+  const earthSurfaceOpen = useSelectionStore((s) => s.earthSurfaceOpen);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-space">
@@ -20,6 +22,7 @@ function App() {
       <Sidebar />
       <CameraModeSwitch />
       {scaleLevel === 'solar' ? <TimeController /> : <LevelCaption level={scaleLevel} />}
+      {earthSurfaceOpen && <EarthSurfaceView />}
     </div>
   );
 }
