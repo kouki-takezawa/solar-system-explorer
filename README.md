@@ -1,5 +1,7 @@
 # Solar Explorer — 太陽系タイムトラベル・ビジュアライザー（デモ）
 
+🔗 **本番URL**: [https://solar-system-explorer-inky.vercel.app](https://solar-system-explorer-inky.vercel.app)
+
 Three.js（react-three-fiber）による宇宙ビジュアライザーのデモ実装。太陽系から恒星近傍・銀河系・観測可能な宇宙まで、シームレスなズームで行き来しながら、時間軸を自由に操作して探索できます。
 
 ## 起動方法
