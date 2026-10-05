@@ -2,6 +2,8 @@
 
 🔗 **本番URL**: [https://solar-system-explorer-inky.vercel.app](https://solar-system-explorer-inky.vercel.app)
 
+![Solar Explorer のスクリーンショット](docs/screenshot.png)
+
 ## これは何のリポジトリか
 
 **Solar Explorer** は、太陽系から恒星近傍・銀河系・観測可能な宇宙まで、シームレスなズームで行き来しながら、時間軸を自由に操作して探索できる**3D宇宙ビジュアライザー**です。ブラウザ上で動作し、Three.js（react-three-fiber）でリアルタイムに描画しています。
